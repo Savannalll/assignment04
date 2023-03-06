@@ -1,26 +1,127 @@
 ---
-title: "index.qmd"
+title: "Reshaping Adolescents' Gender Attitudes in India"
+author: Savanna
 format: html
 editor: visual
+data source: https://www.openicpsr.org/openicpsr/project/149882/version/V1/view 
 ---
 
-## Quarto
-
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
 ```{r}
-1 + 1
+library(tidyverse)
+library(urbnthemes)
+set_urbn_defaults(style = "print")
+library(haven)
+library(likert)
+library(labelled)
+
+
 ```
 
-You can add options to executable code like this
+Data Manipulation
 
 ```{r}
-#| echo: false
-2 * 2
+base_data <- read_dta("/Users/savanna/Desktop/2023 Spring/Intro to Data Science/Assignments/assignment04/data/data/baseline_student_raw.dta")
+
+data1 <- base_data %>% 
+    select(child_id, gender = student_gender, age = child_age, b_woman_role = child_woman_role, b_marry_18 = marry_18, b_opinion_who_marry = child_marry_opinion, b_imp_boy_high_edu = imp_boy_high_edu, b_woman_tol_viol = child_woman_tol_viol)
+
+
+endline_data <- read_dta("/Users/savanna/Desktop/2023 Spring/Intro to Data Science/Assignments/assignment04/data/data/endline2_student_raw.dta")
+
+data2 <- endline_data %>% 
+    select(child_id, e_woman_role = woman_role_home, e_marry_18 = marry_18, e_opinion_who_marry = opinion_who_marry, e_imp_boy_high_edu = imp_boy_high_edu, e_woman_viol = woman_viol)
+
+data <- inner_join(x=data1, y=data2,by = "child_id")
+
 ```
 
-The `echo: false` option disables the printing of code (only output is displayed).
+1.  Age Distribution of Children Observed
+
+```{r}
+
+data %>% ggplot()+
+  geom_bar(mapping = aes(x = age), color = "grey",fill = "blue")+
+  labs(title = "Age Distribution of Children Observed",
+       x = "Age (years)",
+       y = "Count")+
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+2.  Answers to 5 gender attitude questions before the intervention
+
+```{r}
+before <- data %>%
+  select(starts_with("b_")) %>%
+  pivot_longer(everything(), names_to = "questions", values_to = "answers") %>%
+  mutate(answers = dplyr::recode(answers, "1" = "Strongly Disagree", "2" = "Disagree", "3" = "Neutral", "4" = "Agree", "5" = "Strongly Agree")) %>%
+  group_by(questions, answers) %>%
+  summarize(count = n()) %>%
+  mutate(percentage = count/sum(count)) %>%
+  ungroup()
+
+ggplot(before, aes(x = percentage, y = questions, fill = answers)) +
+  geom_col() +
+  scale_fill_manual(values = c("Strongly Disagree" = "#FF4D4D", "Disagree" = "#FFA07A", "Neutral" = "#F5DEB3", "Agree" = "#ADFF2F", "Strongly Agree" = "#00FF7F")) +
+  labs(title = "Gender Attitudes Before Intervention",
+       x = "Percentage",
+       y = "Questions") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+3.  Answers to 5 gender attitude questions after the intervention
+
+```{r}
+after <- data %>%
+  select(starts_with("e_")) %>% 
+  pivot_longer(everything(), names_to = "questions", values_to = "answers") %>% 
+ mutate(answers = recode(answers, "1" = "Strongly Disagree", "2" = "Disagree", "3" = "Neutral", "4" = "Agree", "5" = "Strongly Agree")) %>%
+  group_by(questions, answers) %>% 
+  summarize(count = n()) %>% 
+  mutate(percentage = count/sum(count)) %>% 
+  ungroup()
+
+ggplot(before) +
+  geom_col(aes(x = percentage, y = questions, fill = answers)) +
+  scale_fill_manual(values = c("Strongly Disagree" = "#FF4D4D", "Disagree" = "#FFA07A", "Neutral" = "#F5DEB3", "Agree" = "#ADFF2F", "Strongly Agree" = "#00FF7F")) +
+  labs(title = "Gender Attitudes Before Intervention",
+       x = "Percentage",
+       y = "Questions")+
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+```{r}
+after <- data %>%
+  select(starts_with("e_")) %>%
+  pivot_longer(everything(), names_to = "questions", values_to = "answers") %>%
+  mutate(answers = dplyr::recode(answers, "1" = "Strongly Disagree", "2" = "Disagree", "3" = "Neutral", "4" = "Agree", "5" = "Strongly Agree")) %>%
+  group_by(questions, answers) %>%
+  summarize(count = n()) %>%
+  mutate(percentage = count/sum(count)) %>%
+  ungroup()
+
+ggplot(after, aes(x = percentage, y = questions, fill = answers)) +
+  geom_col() +
+  scale_fill_manual(values = c("Strongly Disagree" = "#FF4D4D", "Disagree" = "#FFA07A", "Neutral" = "#F5DEB3", "Agree" = "#ADFF2F", "Strongly Agree" = "#00FF7F")) +
+  labs(title = "Gender Attitudes Before Intervention",
+       x = "Percentage",
+       y = "Questions") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+4.  School Map
+
+```{r}
+library(sf)
+
+school_map <- read.csv("/Users/savanna/Desktop/2023 Spring/Intro to Data Science/Assignments/assignment04/data/data/school_gps_map.csv")
+sf <- st_as_sf(school_map, coords = c("longitude", "latitude"), crs = 4326)
+
+sf %>%
+  ggplot() + 
+    geom_sf(color = "black", fill = "#F5F5F5") +
+    labs(title = "School Map", caption = "Map of participating schools") +
+    theme(plot.title = element_text(hjust = 0.5))
+    
+    
+```
