@@ -3,7 +3,9 @@ title: "Reshaping Adolescents' Gender Attitudes in India"
 author: Savanna
 format: html
 editor: visual
+self-contained: true
 data source: https://www.openicpsr.org/openicpsr/project/149882/version/V1/view 
+[hyperlinked text](url.com)
 ---
 
 ```{r}
@@ -14,10 +16,26 @@ library(haven)
 library(likert)
 library(labelled)
 
-
+#| warning: false
 ```
 
-Data Manipulation
+Despite India's fast economic growth, gender inequality remains a persistent problem at all levels of society. Studies have shown gender sensitization education program has been demonstrated to be highly effective in changing boys\' negative perception towards women. J-Pal economists have implemented in the state of Haryana a school-based intervention that has promising results in changing gender attitudes among 14,000 students and 314 government schools. Haryana state was chosen because of its skewed sex ratio of 1:1.2. The following is a map of schools in Haryana states. 
+
+```{r}
+library(sf)
+
+school_map <- read.csv("/Users/savanna/Desktop/2023 Spring/Intro to Data Science/Assignments/assignment04/data/data/school_gps_map.csv")
+sf <- st_as_sf(school_map, coords = c("longitude", "latitude"), crs = 4326)
+
+sf %>%
+  ggplot() + 
+    geom_sf(color = "black", fill = "#F5F5F5", size = 0.5, shape = 8 )+
+    labs(title = "School Map", caption = "Map of participating schools") +
+    theme_void()
+    
+#| warning: false
+    
+```
 
 ```{r}
 base_data <- read_dta("/Users/savanna/Desktop/2023 Spring/Intro to Data Science/Assignments/assignment04/data/data/baseline_student_raw.dta")
@@ -33,21 +51,37 @@ data2 <- endline_data %>%
 
 data <- inner_join(x=data1, y=data2,by = "child_id")
 
+#| warning: false
+
 ```
 
-1.  Age Distribution of Children Observed
+The study was conducted to objectively measure gender attitudes and behavior in the sample schools. Since it means to measure the level of comfort that the students shared with the opposite sex and the belief in girls\' competence as held by both the boys and the girls, 197 co-ed school were chosen for this study. Age is another important component of this study since adolescents\' gender attitudes are still malleable. The study cohort was in grade 10 and 11. The following graph has their age distribution. 
 
 ```{r}
 
 data %>% ggplot()+
-  geom_bar(mapping = aes(x = age), color = "grey",fill = "blue")+
+  geom_bar(mapping = aes(x = age), color = "grey",fill = "blue", width = 0.5)+
   labs(title = "Age Distribution of Children Observed",
+       caption = "3IE",
+       subtitle = "sample size: 14810",
        x = "Age (years)",
        y = "Count")+
   theme(plot.title = element_text(hjust = 0.5))
+
+#| warning: false
 ```
 
-2.  Answers to 5 gender attitude questions before the intervention
+The baseline data and endline data measure both girls and boys\' responses to a series of gender attitudes questions, following are 5 example questions. Answers are measured in a likert scale
+
+-   A woman's most important role is to take care of her home, feed kids and care for men and elders
+
+-   It is ok to have a significant opinion in deciding whom to marry.
+
+-   A woman should tolerate violence in order to keep her family together.
+
+-   Rakhi needs to be married off as she is 18 years old.
+
+-   It is more important to send boys for higher education compared to girls.
 
 ```{r}
 before <- data %>%
@@ -59,35 +93,17 @@ before <- data %>%
   mutate(percentage = count/sum(count)) %>%
   ungroup()
 
-ggplot(before, aes(x = percentage, y = questions, fill = answers)) +
+ggplot(before, aes(x = percentage, y = questions, fill = answers, alpha= 0.3, width = 0.5)) +
   geom_col() +
   scale_fill_manual(values = c("Strongly Disagree" = "#FF4D4D", "Disagree" = "#FFA07A", "Neutral" = "#F5DEB3", "Agree" = "#ADFF2F", "Strongly Agree" = "#00FF7F")) +
   labs(title = "Gender Attitudes Before Intervention",
+       caption = "3IE",
+       subtitle = "sample size: 14810",
        x = "Percentage",
        y = "Questions") +
   theme(plot.title = element_text(hjust = 0.5))
-```
 
-3.  Answers to 5 gender attitude questions after the intervention
-
-```{r}
-after <- data %>%
-  select(starts_with("e_")) %>% 
-  pivot_longer(everything(), names_to = "questions", values_to = "answers") %>% 
- mutate(answers = recode(answers, "1" = "Strongly Disagree", "2" = "Disagree", "3" = "Neutral", "4" = "Agree", "5" = "Strongly Agree")) %>%
-  group_by(questions, answers) %>% 
-  summarize(count = n()) %>% 
-  mutate(percentage = count/sum(count)) %>% 
-  ungroup()
-
-ggplot(before) +
-  geom_col(aes(x = percentage, y = questions, fill = answers)) +
-  scale_fill_manual(values = c("Strongly Disagree" = "#FF4D4D", "Disagree" = "#FFA07A", "Neutral" = "#F5DEB3", "Agree" = "#ADFF2F", "Strongly Agree" = "#00FF7F")) +
-  labs(title = "Gender Attitudes Before Intervention",
-       x = "Percentage",
-       y = "Questions")+
-  theme(plot.title = element_text(hjust = 0.5))
-
+#| warning: false
 ```
 
 ```{r}
@@ -100,28 +116,19 @@ after <- data %>%
   mutate(percentage = count/sum(count)) %>%
   ungroup()
 
-ggplot(after, aes(x = percentage, y = questions, fill = answers)) +
+ggplot(after, aes(x = percentage, y = questions, fill = answers, alpha= 0.3, width = 0.5)) +
   geom_col() +
   scale_fill_manual(values = c("Strongly Disagree" = "#FF4D4D", "Disagree" = "#FFA07A", "Neutral" = "#F5DEB3", "Agree" = "#ADFF2F", "Strongly Agree" = "#00FF7F")) +
   labs(title = "Gender Attitudes Before Intervention",
+       caption = "3IE",
+       subtitle = "sample size: 14810",
        x = "Percentage",
        y = "Questions") +
   theme(plot.title = element_text(hjust = 0.5))
+
+#| warning: false
 ```
 
-4.  School Map
-
 ```{r}
-library(sf)
 
-school_map <- read.csv("/Users/savanna/Desktop/2023 Spring/Intro to Data Science/Assignments/assignment04/data/data/school_gps_map.csv")
-sf <- st_as_sf(school_map, coords = c("longitude", "latitude"), crs = 4326)
-
-sf %>%
-  ggplot() + 
-    geom_sf(color = "black", fill = "#F5F5F5") +
-    labs(title = "School Map", caption = "Map of participating schools") +
-    theme(plot.title = element_text(hjust = 0.5))
-    
-    
 ```
